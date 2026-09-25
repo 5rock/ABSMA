@@ -1,0 +1,48 @@
+{
+  "model": "TF-IDF + Logistic Regression",
+  "dataset": "stanfordnlp/imdb",
+  "train_samples": 25000,
+  "test_samples": 25000,
+  "accuracy": 0.899,
+  "precision": 0.8956,
+  "recall": 0.9032,
+  "f1_score": 0.8994,
+  "confusion_matrix": [
+    [
+      11184,
+      1316
+    ],
+    [
+      1210,
+      11290
+    ]
+  ],
+  "classification_report": {
+    "negative": {
+      "precision": 0.9023721155397774,
+      "recall": 0.89472,
+      "f1-score": 0.898529766208725,
+      "support": 12500.0
+    },
+    "positive": {
+      "precision": 0.895605267333016,
+      "recall": 0.9032,
+      "f1-score": 0.8993866008125547,
+      "support": 12500.0
+    },
+    "accuracy": 0.89896,
+    "macro avg": {
+      "precision": 0.8989886914363967,
+      "recall": 0.89896,
+      "f1-score": 0.8989581835106399,
+      "support": 25000.0
+    },
+    "weighted avg": {
+      "precision": 0.8989886914363966,
+      "recall": 0.89896,
+      "f1-score": 0.8989581835106399,
+      "support": 25000.0
+    }
+  },
+  "note": "These metrics reflect REVIEW-LEVEL sentiment classification. IMDb does not provide aspect-level sentiment labels."
+}

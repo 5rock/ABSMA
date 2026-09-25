@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}MovieLens ABSA{% endblock %}</title>
+  <meta name="description" content="Explore movies and understand what viewers think using Aspect-Based Sentiment Analysis." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ═══════════════════ NAVBAR ═══════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="nav-brand">
+    <a href="/" style="text-decoration: none; color: inherit; display:flex; align-items:center; gap:10px;">
+      <span class="nav-logo">🎬</span>
+      <span class="nav-title">MovieLens <span>ABSA</span></span>
+    </a>
+  </div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}" id="navHome">Home</a></li>
+    <li><a href="/movies" class="nav-link {% if request.path == '/movies' %}active{% endif %}" id="navMovies">Movies</a></li>
+    <li><a href="/analyze" class="nav-link {% if request.path == '/analyze' %}active{% endif %}" id="navAnalyze">Analyze Review</a></li>
+    <li><a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}" id="navAbout">About</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="nav-search-icon" onclick="window.location.href='/movies'">🔍</button>
+    <button class="nav-menu-btn" id="navMenuBtn" onclick="toggleMobileNav()">☰</button>
+  </div>
+</nav>
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<script src="/static/js/script.js"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

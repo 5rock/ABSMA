@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}MovieLens ABSA - Movies{% endblock %}
+
+{% block content %}
+<section class="section active-section" id="movies">
+  <div class="page-header container">
+    <h1 class="page-title">Explore Movies</h1>
+    <p class="page-subtitle">Discover <span id="dynamicMovieCount">...</span> movies and see what audiences think.</p>
+  </div>
+  
+  <div class="content-grid container">
+    <!-- Mobile Filter Toggle -->
+    <div class="mobile-filter-bar">
+      <button class="btn-outline w-full" onclick="document.getElementById('filterSidebar').classList.toggle('open')">🎛️ Toggle Filters</button>
+    </div>
+
+    <!-- Filter Sidebar -->
+    <aside class="filter-sidebar" id="filterSidebar">
+      <div class="filter-header">
+        <h3 class="filter-title">Filters</h3>
+        <button class="clear-filters-btn" onclick="clearAllFilters()">Clear All</button>
+      </div>
+      
+      <!-- Search Input -->
+      <div class="filter-group">
+        <h4 class="filter-group-title">Search</h4>
+        <input type="text" id="movieSearch" class="search-input" style="width:100%; border:1px solid var(--border-color); padding:8px; border-radius:4px; background:var(--bg-dark); color:white;" placeholder="Search..." oninput="debounceSearch()">
+      </div>
+
+      <!-- Active Filters Chips -->
+      <div class="active-filters" id="activeFiltersContainer" style="display:none"></div>
+
+      <div class="filter-group">
+        <h4 class="filter-group-title">Genre</h4>
+        <div class="genre-check-grid" id="genreChecks">
+          <!-- Populated dynamically or hardcoded for safety -->
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <h4 class="filter-group-title">Age Category</h4>
+        <label class="filter-checkbox"><input type="checkbox" name="age" value="Child Specific" onchange="applyFilters()"><span class="checkbox-label">🧒 Child Specific</span></label>
+        <label class="filter-checkbox"><input type="checkbox" name="age" value="Family" onchange="applyFilters()"><span class="checkbox-label">👨‍👩‍👧 Family</span></label>
+        <label class="filter-checkbox"><input type="checkbox" name="age" value="Teen" onchange="applyFilters()"><span class="checkbox-label">🎒 Teen</span></label>
+        <label class="filter-checkbox"><input type="checkbox" name="age" value="18+" onchange="applyFilters()"><span class="checkbox-label">🔞 18+</span></label>
+      </div>
+
+      <div class="filter-group">
+        <h4 class="filter-group-title">Edge Rating</h4>
+        <label class="filter-checkbox"><input type="checkbox" name="rating" value="A+" onchange="applyFilters()"><span class="checkbox-label"><span class="rating-badge rA+">A+</span></span></label>
+        <label class="filter-checkbox"><input type="checkbox" name="rating" value="A" onchange="applyFilters()"><span class="checkbox-label"><span class="rating-badge rA">A</span></span></label>
+        <label class="filter-checkbox"><input type="checkbox" name="rating" value="B+" onchange="applyFilters()"><span class="checkbox-label"><span class="rating-badge rB+">B+</span></span></label>
+        <label class="filter-checkbox"><input type="checkbox" name="rating" value="B" onchange="applyFilters()"><span class="checkbox-label"><span class="rating-badge rB">B</span></span></label>
+        <label class="filter-checkbox"><input type="checkbox" name="rating" value="C" onchange="applyFilters()"><span class="checkbox-label"><span class="rating-badge rC">C</span></span></label>
+      </div>
+    </aside>
+
+    <!-- Movie Grid -->
+    <main class="movie-main">
+      <div class="movie-results-header">
+        <span class="results-count" id="resultsCount">Loading movies...</span>
+      </div>
+
+      <div class="movie-grid" id="allMoviesGrid">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="empty-icon">🍿</div>
+        <h3>No movies found</h3>
+        <p>Try adjusting your search or filters.</p>
+        <button class="btn-primary mt-3" onclick="clearAllFilters()">Clear Filters</button>
+      </div>
+    </main>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let debounceTimer;
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Check URL params for initial state
+    const params = new URLSearchParams(window.location.search);
+    if(params.has('q')) document.getElementById('movieSearch').value = params.get('q');
+    
+    ['genre', 'age', 'rating'].forEach(paramName => {
+        const values = params.getAll(paramName);
+        values.forEach(val => {
+            const cb = document.querySelector(`input[name="${paramName}"][value="${val}"]`);
+            if(cb) cb.checked = true;
+        });
+    });
+
+    loadInitialDataAndApplyFilters();
+});
+
+async function loadInitialDataAndApplyFilters() {
+    try {
+        const res = await fetch("/api/movies");
+        const data = await res.json();
+        
+        // Populate genres
+        const genres = new Set();
+        data.movies.forEach(m => {
+            if(m.genres) m.genres.forEach(g => genres.add(g));
+        });
+        const genreChecks = document.getElementById('genreChecks');
+        Array.from(genres).sort().forEach(g => {
+            genreChecks.innerHTML += `
+              <label class="filter-checkbox">
+                <input type="checkbox" name="genre" value="${g}" onchange="applyFilters()">
+                <span class="checkbox-label">${g}</span>
+              </label>
+            `;
+        });
+        
+        // Check params again for newly created genre checkboxes
+        const params = new URLSearchParams(window.location.search);
+        params.getAll('genre').forEach(val => {
+            const cb = document.querySelector(`input[name="genre"][value="${val}"]`);
+            if(cb) cb.checked = true;
+        });
+
+        applyFilters();
+    } catch(e) {
+        console.error(e);
+        document.getElementById('resultsCount').textContent = "Movie data is temporarily unavailable.";
+    }
+}
+
+function debounceSearch() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        applyFilters();
+    }, 400);
+}
+
+async function applyFilters() {
+    const query = document.getElementById('movieSearch').value.trim();
+    const genres = Array.from(document.querySelectorAll('input[name="genre"]:checked')).map(cb => cb.value);
+    const ages = Array.from(document.querySelectorAll('input[name="age"]:checked')).map(cb => cb.value);
+    const ratings = Array.from(document.querySelectorAll('input[name="rating"]:checked')).map(cb => cb.value);
+    
+    updateActiveFiltersUI(genres, ages, ratings);
+    
+    let url = new URL("/api/movies/filter", window.location.origin);
+    if (query) url.searchParams.append("q", query);
+    genres.forEach(g => url.searchParams.append("genre", g));
+    ages.forEach(a => url.searchParams.append("age", a));
+    ratings.forEach(r => url.searchParams.append("rating", r));
+    
+    // Update URL without reloading
+    const newPageUrl = new URL("/movies", window.location.origin);
+    if (query) newPageUrl.searchParams.append("q", query);
+    genres.forEach(g => newPageUrl.searchParams.append("genre", g));
+    ages.forEach(a => newPageUrl.searchParams.append("age", a));
+    ratings.forEach(r => newPageUrl.searchParams.append("rating", r));
+    window.history.replaceState({}, "", newPageUrl);
+    
+    document.getElementById('resultsCount').textContent = "Loading...";
+    
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        document.getElementById('dynamicMovieCount').textContent = data.total;
+        renderMovies(data.movies);
+    } catch(err) {
+        console.error("Filter error:", err);
+        document.getElementById('resultsCount').textContent = "Error applying filters.";
+    }
+}
+
+function renderMovies(movies) {
+    const grid = document.getElementById('allMoviesGrid');
+    grid.innerHTML = '';
+    
+    if (!movies || movies.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('resultsCount').textContent = "0 movies found";
+    } else {
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('resultsCount').textContent = `Showing ${movies.length} movies`;
+        
+        movies.forEach(movie => {
+            grid.appendChild(createMovieCard(movie));
+        });
+    }
+}
+
+function updateActiveFiltersUI(genres, ages, ratings) {
+  const container = document.getElementById('activeFiltersContainer');
+  container.innerHTML = '';
+  
+  const allFilters = [...genres, ...ages, ...ratings];
+  if(allFilters.length > 0) {
+    container.style.display = 'flex';
+    allFilters.forEach(f => {
+      const chip = document.createElement('div');
+      chip.className = 'active-chip';
+      chip.innerHTML = `${f} <span style="margin-left:3px; font-weight:bold;">×</span>`;
+      chip.onclick = () => removeFilter(f);
+      container.appendChild(chip);
+    });
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+function removeFilter(value) {
+  const cbs = document.querySelectorAll('input[type="checkbox"]');
+  cbs.forEach(cb => {
+    if(cb.value === value) cb.checked = false;
+  });
+  applyFilters();
+}
+
+function clearAllFilters() {
+  const cbs = document.querySelectorAll('input[type="checkbox"]');
+  cbs.forEach(cb => cb.checked = false);
+  document.getElementById('movieSearch').value = '';
+  applyFilters();
+}
+</script>
+{% endblock %}

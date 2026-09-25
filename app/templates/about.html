@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}About - MovieLens ABSA{% endblock %}
+
+{% block content %}
+<section class="section active-section" id="about">
+  <div class="container about-container" style="max-width:800px; margin: 0 auto; padding-top:40px;">
+    <div class="page-header">
+      <h1 class="page-title">About MovieLens ABSA</h1>
+      <p class="page-subtitle">B.Tech Final Project — NLP & Sentiment Analysis</p>
+    </div>
+    
+    <div class="about-content">
+      
+      <div class="about-card">
+        <h3>Problem Statement & Objective</h3>
+        <p>Traditional sentiment analysis classifies an entire review as simply positive or negative. However, movie reviews are nuanced—a viewer might praise the acting but criticize the plot. The objective of this project is to build an <strong>Aspect-Based Sentiment Analysis (ABSA)</strong> system that digs deeper by extracting fine-grained targets and predicting the sentiment for each specific aspect.</p>
+      </div>
+
+      <div class="about-card">
+        <h3>How it Works</h3>
+        <ol class="about-list">
+          <li><strong>Text Preprocessing</strong>: Cleans HTML, normalizes text, and prepares sentences.</li>
+          <li><strong>Aspect Extraction</strong>: Uses HuggingFace BERT NER for identifying actors/entities and SpaCy for dependency parsing to find aspect terms.</li>
+          <li><strong>Categorization</strong>: Maps extracted terms into 11 movie domains (e.g., Cinematography, Direction, Plot).</li>
+          <li><strong>Sentiment Classification</strong>: A TF-IDF Logistic Regression model trained on IMDb reviews analyzes the local context sentence surrounding each aspect to predict sentiment.</li>
+        </ol>
+      </div>
+      
+      <div class="about-card">
+        <h3>System Architecture</h3>
+        <p>This is a full-stack Flask application. The frontend communicates with the backend REST API. For the movie catalogue, the backend integrates with the <strong>IMDb API via AWS Data Exchange</strong> (with a local dataset fallback), ensuring real metadata, proper deduplication, and caching.</p>
+      </div>
+
+      <div class="about-card limitation-card">
+        <h3>⚠️ Important Data Disclaimer</h3>
+        <p>This is a demonstration application. Please note the following constraints:</p>
+        <ul class="about-list">
+          <li><strong>IMDb Labels</strong>: IMDb provides overall review-level sentiment. The aspect sentiments shown in this app are automatically generated machine predictions, not gold-standard human annotations.</li>
+          <li><strong>Metadata</strong>: Some movie metadata (like Edge Rating or Age Category) are custom application classifications used to demonstrate filtering, while ratings and plots are pulled from IMDb.</li>
+        </ul>
+      </div>
+
+      <div class="about-card">
+        <h3>Technologies Used</h3>
+        <div class="tech-grid">
+          <span class="tech-badge">Python 3</span>
+          <span class="tech-badge">Flask</span>
+          <span class="tech-badge">SpaCy</span>
+          <span class="tech-badge">Transformers (BERT)</span>
+          <span class="tech-badge">scikit-learn</span>
+          <span class="tech-badge">Pandas</span>
+          <span class="tech-badge">IMDb API (AWS)</span>
+          <span class="tech-badge">Vanilla JS/CSS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

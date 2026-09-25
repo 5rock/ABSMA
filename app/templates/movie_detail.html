@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ movie.title }} - MovieLens ABSA{% endblock %}
+
+{% block content %}
+<section class="section active-section container" style="padding-top: 40px;">
+  <div class="modal-box" style="position:relative; width:100%; animation:none; transform:none; max-height:none; box-shadow:none;">
+    <div class="modal-body-split">
+      <div class="modal-poster-col">
+        <img src="{{ movie.poster_url if movie.poster_url else '/static/images/placeholder.png' }}" alt="{{ movie.title }} Poster" class="modal-poster {% if not movie.poster_url %}fallback{% endif %}" onerror="this.src='/static/img/placeholder.png'; this.classList.add('fallback');" />
+      </div>
+      <div class="modal-info-col">
+        <h2 class="modal-title">{{ movie.title }}</h2>
+        <div class="modal-meta-row">
+          {% if movie.year %}<span class="m-year">{{ movie.year }}</span>{% endif %}
+          {% if movie.runtime %}<span class="m-runtime">{{ movie.runtime }}</span>{% endif %}
+          {% if movie.director %}<span class="m-director">Dir: {{ movie.director }}</span>{% endif %}
+        </div>
+        
+        <div class="modal-badges mt-2">
+          {% if movie.imdb_id %}
+            <span class="rating-badge" style="border-color:#f5c518; color:#f5c518" title="IMDb ID">IMDb</span>
+          {% endif %}
+          
+          {% if movie.certificate %}
+            <span class="rating-badge" style="border-color:#fff; color:#fff" title="IMDb Certificate">{{ movie.certificate }}</span>
+          {% endif %}
+
+          {% if movie.imdb_rating %}
+            <span class="rating-badge" style="border-color:#f5c518; color:#f5c518" title="IMDb Rating">⭐ {{ movie.imdb_rating }}</span>
+          {% endif %}
+
+          {% for genre in movie.genres %}
+            <span class="rating-badge" style="border-color:#475569; color:#94a3b8">{{ genre }}</span>
+          {% endfor %}
+
+          {% if movie.age_category %}
+            <span class="rating-badge" style="border-color:var(--color-secondary); color:var(--color-secondary)" title="Application Age Category">{{ movie.age_category }}</span>
+          {% endif %}
+
+          {% if movie.edge_rating %}
+            <span class="rating-badge r{{ movie.edge_rating|replace('+', '\\+') }}" title="Application Edge Rating">{{ movie.edge_rating }}</span>
+          {% endif %}
+        </div>
+        
+        <p class="modal-desc mt-3">
+          {{ movie.description if movie.description else movie.plot }}
+        </p>
+        
+        {% if movie.cast %}
+        <div class="modal-cast mt-3">
+          <strong>Top Cast:</strong> <span>{{ movie.cast }}</span>
+        </div>
+        {% endif %}
+        
+        <div class="modal-analyze-box mt-4">
+          <h3 class="modal-review-title">Analyze Audience Sentiment</h3>
+          <p class="text-sm text-gray mb-2">Want to analyze a review for this movie? Jump to the analysis workspace.</p>
+          
+          <a href="/analyze?movie_id={{ movie.id }}" class="btn-primary modal-analyze-btn mt-2" style="text-decoration:none; display:inline-block;">
+            ✨ Analyze Reviews for {{ movie.title }}
+          </a>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

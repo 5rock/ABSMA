@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Analyze Review - MovieLens ABSA{% endblock %}
+
+{% block content %}
+<section class="section active-section" id="analyze">
+  <div class="container analyze-container-center">
+    <div class="page-header text-center">
+      <h1 class="page-title">🔬 Analyze a Movie Review</h1>
+      <p class="page-subtitle">Paste a review {% if movie %}for <strong>{{ movie.title }}</strong> {% endif %}and discover what audiences think about each movie aspect.</p>
+    </div>
+
+    <div class="analyze-card">
+      <textarea
+        id="reviewInput"
+        class="review-textarea"
+        rows="8"
+        placeholder="Type or paste a movie review here... e.g., 'The acting was incredible but the CGI looked cheap. Hans Zimmer's score was perfect.'"
+        oninput="updateCharCount()"
+      ></textarea>
+      
+      <div class="textarea-footer">
+        <span class="char-count" id="charCount">0 / 5000 characters</span>
+        <button class="btn-primary analyze-btn" id="analyzeBtn" onclick="analyzeReview()">
+          <span id="analyzeBtnText">✨ Analyze Sentiment</span>
+          <span id="analyzeBtnSpinner" class="btn-spinner" style="display:none"></span>
+        </button>
+      </div>
+
+      <div class="example-reviews mt-4">
+        <p class="examples-title text-sm">Try an example:</p>
+        <div class="example-btns">
+          <button class="example-btn" onclick="loadExample(0)">Acting + Plot</button>
+          <button class="example-btn" onclick="loadExample(1)">Visuals + Music</button>
+          <button class="example-btn" onclick="loadExample(2)">Mixed Review</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Status messages -->
+    <div id="analyzeStatus" class="analyze-status" style="display:none">
+      <div class="spinner-small"></div> <span id="analyzeStatusText">Analyzing...</span>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-panel mt-5" id="resultsPanel" style="display:none">
+      
+      <!-- Overall Sentiment -->
+      <div class="overall-sentiment-banner" id="overallSentimentCard">
+        <div class="os-left">
+          <h3>Overall Sentiment</h3>
+          <p class="os-desc">Machine predicted sentiment for the entire review.</p>
+        </div>
+        <div class="os-right">
+          <div class="overall-badge" id="overallBadge">Positive</div>
+        </div>
+      </div>
+
+      <!-- Aspect Sentiment Summary -->
+      <div class="aspect-summary-grid mt-4">
+        <div class="summary-box">
+          <div class="sum-val text-green" id="positiveCount">0</div>
+          <div class="sum-label">Positive Aspects</div>
+        </div>
+        <div class="summary-box">
+          <div class="sum-val text-red" id="negativeCount">0</div>
+          <div class="sum-label">Negative Aspects</div>
+        </div>
+        <div class="summary-box">
+          <div class="sum-val" id="totalAspects">0</div>
+          <div class="sum-label">Total Aspects</div>
+        </div>
+      </div>
+
+      <div class="aspect-cards-container mt-4" id="aspectCardsContainer">
+        <h3 class="mb-3">Detected Aspects</h3>
+        <!-- Cards populated by JS -->
+      </div>
+      
+      <!-- No aspects found -->
+      <div class="no-aspects-card mt-4" id="noAspectsCard" style="display:none">
+        <div class="no-aspects-icon">🔍</div>
+        <h3>No specific movie aspects detected</h3>
+        <p>The model couldn't find terms like 'acting', 'director', or 'plot'.</p>
+      </div>
+    </div>
+
+    <!-- Error Panel -->
+    <div class="error-panel mt-4" id="errorPanel" style="display:none">
+      <div class="error-icon">⚠️</div>
+      <h3 id="errorTitle">Analysis Error</h3>
+      <p id="errorMsg"></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

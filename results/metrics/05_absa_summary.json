@@ -1,0 +1,30 @@
+{
+  "pipeline": "TF-IDF Logistic Regression + BERT NER + SpaCy + Domain Taxonomy",
+  "total_reviews_processed": 50,
+  "total_aspects_extracted": 433,
+  "reviews_with_aspects": 50,
+  "avg_aspects_per_review": 8.66,
+  "unique_aspect_categories": 11,
+  "overall_review_sentiment_distribution": {
+    "positive": 22,
+    "negative": 28
+  },
+  "aspect_sentiment_distribution": {
+    "positive": 262,
+    "negative": 171
+  },
+  "category_distribution": {
+    "Actor/Performance": 258,
+    "Plot/Story": 60,
+    "Characters": 27,
+    "Direction": 24,
+    "Atmosphere/Tone": 22,
+    "Music/Soundtrack": 11,
+    "Cinematography/Visuals": 8,
+    "Special Effects/CGI": 7,
+    "Dialogues/Screenplay": 6,
+    "Pacing/Editing": 5,
+    "Ending": 5
+  },
+  "annotation_note": "IMDb provides overall review-level sentiment labels only. Aspect-level sentiments are AUTOMATICALLY GENERATED predictions \u2014 NOT gold truth."
+}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}MovieLens ABSA - Home{% endblock %}
+
+{% block content %}
+<section class="section active-section" id="home">
+  <!-- Modern Hero Section -->
+  <div class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge">✨ Understand what audiences really think</div>
+      <h1 class="hero-title">Discover Movies Through <span>Sentiment</span></h1>
+      <p class="hero-subtitle">
+        Powered by Aspect-Based Sentiment Analysis (ABSA). We break down reviews into acting, story, directing, and more.
+      </p>
+      
+      <div class="hero-search-wrap">
+        <div class="search-bar" id="heroSearchBar">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            id="heroSearch"
+            class="search-input"
+            placeholder="Search for movies, actors, directors, or genres..."
+            autocomplete="off"
+            onkeypress="if(event.key === 'Enter') { window.location.href='/movies?q=' + this.value }"
+          />
+        </div>
+      </div>
+      
+      <div class="hero-actions">
+        <a href="/movies" class="btn-primary" style="text-decoration:none;">Explore Movies</a>
+        <a href="/analyze" class="btn-outline" style="text-decoration:none;">Analyze a Review</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Trending / Featured -->
+    <div class="home-row">
+      <div class="row-header">
+        <h2 class="section-title">Trending Movies</h2>
+        <a href="/movies" class="view-all">View All →</a>
+      </div>
+      <div class="horizontal-scroll" id="trendingMoviesGrid">
+        <!-- Populated by JS in script.js -->
+        <div class="movie-skeleton"></div>
+        <div class="movie-skeleton"></div>
+        <div class="movie-skeleton"></div>
+        <div class="movie-skeleton"></div>
+      </div>
+    </div>
+
+    <!-- Browse By Genre -->
+    <div class="home-row">
+      <h2 class="section-title">Browse By Genre</h2>
+      <div class="genre-pills" id="homeGenrePills">
+        <a href="/movies?genre=Action" class="genre-pill" style="text-decoration:none;">💥 Action</a>
+        <a href="/movies?genre=Comedy" class="genre-pill" style="text-decoration:none;">😂 Comedy</a>
+        <a href="/movies?genre=Drama" class="genre-pill" style="text-decoration:none;">🎭 Drama</a>
+        <a href="/movies?genre=Horror" class="genre-pill" style="text-decoration:none;">👻 Horror</a>
+        <a href="/movies?genre=Sci-Fi" class="genre-pill" style="text-decoration:none;">🛸 Sci-Fi</a>
+        <a href="/movies?genre=Animation" class="genre-pill" style="text-decoration:none;">🎨 Animation</a>
+        <a href="/movies?genre=Romance" class="genre-pill" style="text-decoration:none;">❤️ Romance</a>
+        <a href="/movies?genre=Thriller" class="genre-pill" style="text-decoration:none;">🔪 Thriller</a>
+      </div>
+    </div>
+
+    <!-- Explore By Content -->
+    <div class="home-row">
+      <h2 class="section-title">Explore by Audience</h2>
+      <div class="audience-cards">
+        <a href="/movies?age=Child+Specific" class="audience-card child" style="text-decoration:none; color:inherit;">
+          <div class="aud-icon">🧒</div>
+          <h3>Child Specific</h3>
+        </a>
+        <a href="/movies?age=Family" class="audience-card family" style="text-decoration:none; color:inherit;">
+          <div class="aud-icon">👨‍👩‍👧</div>
+          <h3>Family</h3>
+        </a>
+        <a href="/movies?age=Teen" class="audience-card teen" style="text-decoration:none; color:inherit;">
+          <div class="aud-icon">🎒</div>
+          <h3>Teen</h3>
+        </a>
+        <a href="/movies?age=18%2B" class="audience-card adult" style="text-decoration:none; color:inherit;">
+          <div class="aud-icon">🔞</div>
+          <h3>18+</h3>
+        </a>
+      </div>
+    </div>
+
+    <!-- Aspects Visuals -->
+    <div class="home-row aspects-row">
+      <h2 class="section-title text-center">Aspects Audiences Talk About</h2>
+      <p class="section-subtitle text-center">Our ABSA engine categorizes reviews into distinct dimensions.</p>
+      <div class="aspects-grid">
+        <div class="aspect-card"><div class="a-icon">🎭</div><h4>Acting</h4></div>
+        <div class="aspect-card"><div class="a-icon">📖</div><h4>Story/Plot</h4></div>
+        <div class="aspect-card"><div class="a-icon">🎬</div><h4>Direction</h4></div>
+        <div class="aspect-card"><div class="a-icon">🎵</div><h4>Music</h4></div>
+        <div class="aspect-card"><div class="a-icon">📷</div><h4>Cinematography</h4></div>
+        <div class="aspect-card"><div class="a-icon">✨</div><h4>Special Effects</h4></div>
+        <div class="aspect-card"><div class="a-icon">⏱</div><h4>Pacing</h4></div>
+        <div class="aspect-card"><div class="a-icon">👥</div><h4>Characters</h4></div>
+      </div>
+    </div>
+    
+    <!-- CTA Analyze -->
+    <div class="cta-section">
+      <h2>Have your own opinion?</h2>
+      <p>Test our Aspect-Based Sentiment Analysis pipeline with your own movie review.</p>
+      <a href="/analyze" class="btn-primary large" style="text-decoration:none; display:inline-block;">Analyze a Review</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const res = await fetch("/api/movies");
+        const data = await res.json();
+        const movies = data.movies;
+        
+        const trendingGrid = document.getElementById('trendingMoviesGrid');
+        if(!trendingGrid) return;
+        
+        const shuffled = [...movies].sort(() => 0.5 - Math.random());
+        const trending = shuffled.slice(0, 6);
+        
+        trendingGrid.innerHTML = '';
+        trending.forEach(movie => {
+            trendingGrid.appendChild(createMovieCard(movie));
+        });
+    } catch (e) {
+        console.error(e);
+    }
+});
+</script>
+{% endblock %}

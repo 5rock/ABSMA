@@ -1,0 +1,21 @@
+{
+  "total_reviews_sampled": 50,
+  "total_aspects_extracted": 542,
+  "reviews_with_aspects": 50,
+  "reviews_without_aspects": 0,
+  "avg_aspects_per_review": 10.84,
+  "category_distribution": {
+    "Atmosphere/Tone": 22,
+    "Actor/Performance": 371,
+    "Direction": 23,
+    "Plot/Story": 59,
+    "Music/Soundtrack": 10,
+    "Dialogues/Screenplay": 6,
+    "Cinematography/Visuals": 8,
+    "Characters": 26,
+    "Pacing/Editing": 5,
+    "Special Effects/CGI": 7,
+    "Ending": 5
+  },
+  "annotation_note": "Automatically generated via Transformer NER + SpaCy + domain taxonomy. NOT gold-truth ABSA annotations."
+}
