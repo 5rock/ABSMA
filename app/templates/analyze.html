@@ -10,6 +10,7 @@
     </div>
 
     <div class="analyze-card">
+      <input type="hidden" id="movieTitle" value="{{ movie.title if movie else '' }}">
       <textarea
         id="reviewInput"
         class="review-textarea"

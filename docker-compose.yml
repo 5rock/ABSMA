@@ -1,0 +1,46 @@
+services:
+  absma:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: absma
+    ports:
+      - "5020:5000"
+    env_file:
+      - .env
+    environment:
+      CUDA_VISIBLE_DEVICES: ""
+      # CPU thread control
+      OMP_NUM_THREADS: "4"
+      MKL_NUM_THREADS: "4"
+      TOKENIZERS_PARALLELISM: "false"
+    volumes:
+      - ./data:/app/data
+      - ./results:/app/results
+      - ./models:/app/models
+      - ./app:/app/app
+      - huggingface_cache:/app/.cache/huggingface
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    container_name: absma-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-absma}
+      POSTGRES_USER: ${POSTGRES_USER:-absma_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-absma_user} -d ${POSTGRES_DB:-absma}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  huggingface_cache:
+  postgres_data:

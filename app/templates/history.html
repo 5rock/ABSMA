@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}My Analysis History - MovieLens ABSA{% endblock %}
+
+{% block content %}
+<section class="section active-section" id="history">
+  <div class="container analyze-container-center" style="max-width: 900px;">
+    <div class="page-header text-center">
+      <h1 class="page-title">📖 My Analysis History</h1>
+      <p class="page-subtitle">View and manage all your past movie review analyses.</p>
+    </div>
+
+    <!-- Dashboard Summary -->
+    <div class="dashboard-summary mt-4" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;" id="dashboardSummary">
+        <!-- Filled dynamically -->
+    </div>
+
+    <!-- Controls -->
+    <div class="history-controls mt-5" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px;">
+        
+        <!-- Filters -->
+        <div class="filters" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <select id="periodFilter" class="form-input" style="width: 150px; padding: 8px;" onchange="handleFilterChange()">
+                <option value="">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="custom">Custom Range</option>
+            </select>
+            
+            <div id="customRangeControls" style="display: none; gap: 10px; align-items: center;">
+                <input type="month" id="monthFilter" class="form-input" style="padding: 8px; width: auto;" onchange="handleMonthChange()">
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-box" style="flex: 1; min-width: 250px;">
+            <input type="text" id="searchFilter" class="form-input" placeholder="Search analyzed movies or reviews..." oninput="debounceSearch()" style="width: 100%; padding: 8px;">
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="historyLoading" class="text-center mt-5" style="display: none;">
+        <div class="spinner-small" style="display: inline-block;"></div> <span>Loading history...</span>
+    </div>
+
+    <!-- History List -->
+    <div id="historyList" class="mt-4" style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- Filled dynamically -->
+    </div>
+
+    <!-- Pagination -->
+    <div id="paginationControls" class="mt-4" style="display: flex; justify-content: center; gap: 10px;">
+        <!-- Filled dynamically -->
+    </div>
+
+  </div>
+
+  <!-- Modal for Details -->
+  <div id="detailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+      <div style="background: #1f2937; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; position: relative;">
+          <button onclick="closeDetails()" style="position: absolute; right: 15px; top: 15px; background: transparent; border: none; color: #fff; font-size: 20px; cursor: pointer;">&times;</button>
+          <h2 id="modalMovieTitle" style="color: #60a5fa; margin-bottom: 10px;">Movie Title</h2>
+          <p id="modalDate" style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 15px;">Date</p>
+          <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+              <p id="modalReviewText" style="color: #e5e7eb; line-height: 1.5;"></p>
+          </div>
+          <h3 style="margin-bottom: 15px;">Extracted Aspects</h3>
+          <div id="modalAspects"></div>
+      </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPage = 1;
+    let currentLimit = 10;
+    let searchTimeout = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadHistory();
+    });
+
+    function debounceSearch() {
+        if(searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadHistory();
+        }, 500);
+    }
+
+    function handleFilterChange() {
+        const period = document.getElementById('periodFilter').value;
+        const customControls = document.getElementById('customRangeControls');
+        
+        if (period === 'custom') {
+            customControls.style.display = 'flex';
+        } else {
+            customControls.style.display = 'none';
+            document.getElementById('monthFilter').value = '';
+            currentPage = 1;
+            loadHistory();
+        }
+    }
+
+    function handleMonthChange() {
+        currentPage = 1;
+        loadHistory();
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        loadHistory();
+    }
+
+    async function loadHistory() {
+        document.getElementById('historyLoading').style.display = 'block';
+        document.getElementById('historyList').style.display = 'none';
+        
+        const period = document.getElementById('periodFilter').value;
+        const search = document.getElementById('searchFilter').value;
+        const monthVal = document.getElementById('monthFilter').value;
+        
+        let url = `/api/history?page=${currentPage}&limit=${currentLimit}`;
+        if(search) url += `&search=${encodeURIComponent(search)}`;
+        
+        if (period === 'custom' && monthVal) {
+            const [year, month] = monthVal.split('-');
+            url += `&month=${month}&year=${year}`;
+        } else if (period && period !== 'custom') {
+            url += `&period=${period}`;
+        }
+
+        try {
+            const res = await fetch(url, { credentials: "include" });
+            if (res.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            const data = await res.json();
+            
+            if (data.success) {
+                renderHistory(data);
+                renderPagination(data);
+                updateDashboardSummary(data.analyses);
+            } else {
+                console.error("Error loading history", data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch history:", err);
+        } finally {
+            document.getElementById('historyLoading').style.display = 'none';
+            document.getElementById('historyList').style.display = 'flex';
+        }
+    }
+
+    function updateDashboardSummary(analyses) {
+        let total = analyses.length;
+        let movies = new Set();
+        let pos = 0, neg = 0, neu = 0;
+        
+        analyses.forEach(a => {
+            if(a.movie_title) movies.add(a.movie_title);
+            if(a.result && a.result.aspects) {
+                a.result.aspects.forEach(asp => {
+                    if(asp.sentiment === 'positive') pos++;
+                    if(asp.sentiment === 'negative') neg++;
+                    if(asp.sentiment === 'neutral') neu++;
+                });
+            }
+        });
+
+        const period = document.getElementById('periodFilter').value;
+        let label = "Summary";
+        if(period === 'today') label = "Today";
+        if(period === 'week') label = "This Week";
+        if(period === 'month') label = "This Month";
+
+        const summaryHtml = `
+            <div style="background: rgba(255,255,255,0.05); padding: 15px 25px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.8rem; color: #9ca3af; text-transform: uppercase;">${label} Analyses</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #fff;">${total}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px 25px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.8rem; color: #9ca3af; text-transform: uppercase;">Unique Movies</div>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #fff;">${movies.size}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px 25px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 0.8rem; color: #9ca3af; text-transform: uppercase;">Aspects</div>
+                <div style="font-size: 1rem; color: #fff; margin-top: 5px;">
+                    <span style="color: #4ade80;">${pos} Pos</span> &bull; 
+                    <span style="color: #f87171;">${neg} Neg</span> &bull; 
+                    <span style="color: #9ca3af;">${neu} Neu</span>
+                </div>
+            </div>
+        `;
+        document.getElementById('dashboardSummary').innerHTML = summaryHtml;
+    }
+
+    function renderHistory(data) {
+        const container = document.getElementById('historyList');
+        container.innerHTML = '';
+        
+        if (data.analyses.length === 0) {
+            container.innerHTML = `
+                <div class="text-center p-5" style="background: rgba(255,255,255,0.05); border-radius: 8px;">
+                    <p style="color: #9ca3af; margin: 0;">No analyses found for the selected filters.</p>
+                </div>
+            `;
+            return;
+        }
+
+        data.analyses.forEach(analysis => {
+            const dateStr = new Date(analysis.analyzed_at).toLocaleString();
+            
+            // Generate simple aspects preview
+            let aspectsPreview = '';
+            let aspectCount = 0;
+            if(analysis.result && analysis.result.aspects) {
+                aspectCount = analysis.result.aspects.length;
+                const topAspects = analysis.result.aspects.slice(0, 3);
+                aspectsPreview = topAspects.map(a => {
+                    const color = a.sentiment === 'positive' ? '#4ade80' : a.sentiment === 'negative' ? '#f87171' : '#9ca3af';
+                    return `<span style="display: inline-block; padding: 2px 8px; background: rgba(255,255,255,0.1); border-radius: 12px; font-size: 0.8rem; margin-right: 5px; margin-bottom: 5px; border-left: 3px solid ${color}">${a.aspect}</span>`;
+                }).join('');
+                if(aspectCount > 3) aspectsPreview += `<span style="font-size: 0.8rem; color: #9ca3af;">+${aspectCount - 3} more</span>`;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            card.style.cssText = 'background: rgba(255,255,255,0.05); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 15px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s;';
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3 style="margin: 0 0 5px 0; color: #60a5fa; font-size: 1.2rem;">🎬 ${analysis.movie_title || 'Unknown Movie'}</h3>
+                        <div style="font-size: 0.8rem; color: #9ca3af;">Analyzed: ${dateStr}</div>
+                    </div>
+                    <div>
+                        <button class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick='openDetails(${JSON.stringify(analysis).replace(/'/g, "&#39;")})'>View Details</button>
+                        <button class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; background: #ef4444;" onclick="deleteAnalysis(${analysis.id})">Delete</button>
+                    </div>
+                </div>
+                <div style="color: #e5e7eb; font-size: 0.9rem; line-height: 1.5; font-style: italic; border-left: 2px solid #4b5563; padding-left: 10px;">
+                    "${analysis.review_text.substring(0, 150)}${analysis.review_text.length > 150 ? '...' : ''}"
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; color: #9ca3af; margin-bottom: 5px;">Aspects (${aspectCount}):</div>
+                    <div>${aspectsPreview || '<span style="font-size:0.8rem; color:#9ca3af;">No aspects detected</span>'}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function renderPagination(data) {
+        const container = document.getElementById('paginationControls');
+        container.innerHTML = '';
+        if (data.total_pages <= 1) return;
+
+        if (data.page > 1) {
+            container.innerHTML += `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.9rem; background: #374151;" onclick="changePage(${data.page - 1})">Previous</button>`;
+        }
+
+        for (let i = 1; i <= data.total_pages; i++) {
+            if (i === data.page) {
+                container.innerHTML += `<span style="padding: 5px 10px; background: #2563eb; color: #fff; border-radius: 4px;">${i}</span>`;
+            } else if (i === 1 || i === data.total_pages || (i >= data.page - 1 && i <= data.page + 1)) {
+                container.innerHTML += `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.9rem; background: transparent; border: 1px solid #374151;" onclick="changePage(${i})">${i}</button>`;
+            } else if (i === data.page - 2 || i === data.page + 2) {
+                container.innerHTML += `<span style="padding: 5px 10px; color: #9ca3af;">...</span>`;
+            }
+        }
+
+        if (data.page < data.total_pages) {
+            container.innerHTML += `<button class="btn-primary" style="padding: 5px 10px; font-size: 0.9rem; background: #374151;" onclick="changePage(${data.page + 1})">Next</button>`;
+        }
+    }
+
+    async function deleteAnalysis(id) {
+        if (!confirm("Delete this analysis?")) return;
+        try {
+            const res = await fetch(`/api/history/${id}`, { method: 'DELETE', credentials: "include" });
+            const data = await res.json();
+            if(data.success) {
+                loadHistory();
+            } else {
+                alert("Failed to delete: " + (data.error || "Unknown error"));
+            }
+        } catch(err) {
+            console.error(err);
+            alert("Error deleting analysis");
+        }
+    }
+
+    window.openDetails = function(analysis) {
+        document.getElementById('modalMovieTitle').textContent = `🎬 ${analysis.movie_title || 'Unknown Movie'}`;
+        document.getElementById('modalDate').textContent = `Analyzed: ${new Date(analysis.analyzed_at).toLocaleString()}`;
+        document.getElementById('modalReviewText').textContent = analysis.review_text;
+        
+        let aspectsHtml = '';
+        if(analysis.result && analysis.result.aspects && analysis.result.aspects.length > 0) {
+            analysis.result.aspects.forEach(a => {
+                const color = a.sentiment === 'positive' ? '#4ade80' : a.sentiment === 'negative' ? '#f87171' : '#9ca3af';
+                const emoji = a.sentiment === 'positive' ? '👍' : a.sentiment === 'negative' ? '👎' : '😐';
+                aspectsHtml += `
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${color};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <strong style="font-size: 1.1rem; color: #fff;">${a.aspect}</strong>
+                            <span style="font-size: 0.9rem; color: ${color}; text-transform: uppercase;">${emoji} ${a.sentiment}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #9ca3af; display: flex; justify-content: space-between;">
+                            <span>Category: ${a.category || 'N/A'}</span>
+                            <span>Confidence: ${a.confidence ? a.confidence.toFixed(2) : 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            aspectsHtml = '<p style="color: #9ca3af;">No aspects detected.</p>';
+        }
+        document.getElementById('modalAspects').innerHTML = aspectsHtml;
+        
+        document.getElementById('detailsModal').style.display = 'flex';
+    };
+
+    window.closeDetails = function() {
+        document.getElementById('detailsModal').style.display = 'none';
+    };
+</script>
+{% endblock %}

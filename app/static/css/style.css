@@ -711,3 +711,12 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; line-height
   .modal-body-split { grid-template-columns: 1fr; }
   .modal-poster-col { display: none; /* Hide on small mobile to save space */ }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

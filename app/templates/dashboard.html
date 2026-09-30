@@ -1,0 +1,637 @@
+{% extends "base.html" %}
+{% block title %}History - MovieLens ABSA{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Dashboard Styles */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.dashboard-title-area h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    color: #fff;
+}
+.dashboard-title-area p {
+    margin: 5px 0 0 0;
+    color: #9ca3af;
+}
+
+.month-selector {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+}
+.month-selector:focus {
+    border-color: #FFC107;
+}
+
+/* Summary Grid */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.summary-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+.summary-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 193, 7, 0.5);
+}
+.sc-title {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+.sc-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+.sc-period {
+    color: #6b7280;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+/* Mid Section */
+.mid-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.dash-panel {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 25px;
+}
+.dash-panel h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+/* Horizontal Bar Chart */
+.bar-chart-row {
+    margin-bottom: 15px;
+}
+.bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+.bar-bg {
+    background: rgba(255, 255, 255, 0.1);
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 1s ease-out;
+}
+.bar-positive { background: #4ade80; }
+.bar-negative { background: #f87171; }
+.bar-neutral { background: #9ca3af; }
+.bar-brand { background: #FFC107; }
+
+/* Top Aspects */
+.aspect-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.aspect-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    color: #e5e7eb;
+}
+.aspect-item:last-child {
+    border-bottom: none;
+}
+.aspect-count {
+    background: rgba(255, 193, 7, 0.2);
+    color: #FFC107;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Recent Analyses */
+.recent-analyses-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.recent-analyses-header h3 {
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+.view-all-link {
+    color: #FFC107;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+.view-all-link:hover {
+    opacity: 0.8;
+}
+
+.recent-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.rc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+.rc-title {
+    color: #60a5fa;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+.rc-date {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+.rc-review {
+    color: #e5e7eb;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    font-style: italic;
+    margin-bottom: 10px;
+    border-left: 2px solid #4b5563;
+    padding-left: 10px;
+}
+.rc-aspects {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+.qa-btn {
+    flex: 1;
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+    min-width: 200px;
+}
+.qa-btn:hover {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: #FFC107;
+    color: #FFC107;
+}
+
+/* Loading / Empty States */
+.loading-state, .empty-state, .error-state {
+    text-align: center;
+    padding: 50px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+.empty-state h2 { margin: 0 0 10px 0; color: #fff; }
+.empty-state p { color: #9ca3af; margin-bottom: 20px; }
+
+/* Responsive Grid */
+@media (max-width: 1024px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .mid-section { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .dashboard-header { flex-direction: column; align-items: flex-start; }
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    justify-content: center; align-items: center;
+}
+.modal-content {
+    background: #1f2937; padding: 25px; border-radius: 12px;
+    width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;
+    position: relative; border: 1px solid rgba(255,255,255,0.1);
+}
+.modal-close {
+    position: absolute; right: 15px; top: 15px;
+    background: transparent; border: none; color: #fff;
+    font-size: 20px; cursor: pointer;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="section active-section">
+  <div class="container" style="max-width: 1100px;">
+    
+    <div class="dashboard-header">
+        <div class="dashboard-title-area">
+            <h1>History</h1>
+            <p>Your Movie Analysis Overview &bull; Track your movie reviews, sentiment insights, and analysis history.</p>
+        </div>
+        <div>
+            <input type="month" id="dashMonthSelector" class="month-selector" onchange="loadDashboard()">
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="dashErrorState" class="error-state" style="display: none;">
+        <div class="empty-state-icon">⚠️</div>
+        <h2>Unable to load history data.</h2>
+        <button class="btn-primary" onclick="loadDashboard()">Try Again</button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="dashLoadingState" class="loading-state">
+        <div class="spinner-small" style="display: inline-block; width: 40px; height: 40px;"></div>
+        <p style="color: #9ca3af; margin-top: 15px;">Loading your insights...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="dashEmptyState" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">🎬</div>
+        <h2>No analyses yet</h2>
+        <p>Analyze your first movie review to start building your history.</p>
+        <a href="/analyze" class="btn-primary" style="text-decoration: none; display: inline-block;">🧠 Analyze a Review</a>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div id="dashContent" style="display: none;">
+        
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="sc-title">🎬 Movies Analyzed</div>
+                <div class="sc-value" id="statMovies">0</div>
+                <div class="sc-period">This Period</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-title">📝 Reviews Analyzed</div>
+                <div class="sc-value" id="statReviews">0</div>
+                <div class="sc-period">This Period</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-title">😊 Positive</div>
+                <div class="sc-value" id="statPositive" style="color: #4ade80;">0</div>
+                <div class="sc-period">Sentiment</div>
+            </div>
+            <div class="summary-card">
+                <div class="sc-title">⚠️ Negative</div>
+                <div class="sc-value" id="statNegative" style="color: #f87171;">0</div>
+                <div class="sc-period">Sentiment</div>
+            </div>
+        </div>
+
+        <!-- Mid Section -->
+        <div class="mid-section">
+            
+            <!-- Sentiment & Monthly Activity (Left Column) -->
+            <div>
+                <div class="dash-panel" style="margin-bottom: 20px;">
+                    <h3>Sentiment Overview</h3>
+                    <div id="sentimentChartContainer">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <div class="dash-panel">
+                    <h3>Monthly Activity</h3>
+                    <div id="monthlyActivityContainer">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Aspects (Right Column) -->
+            <div class="dash-panel">
+                <h3>Top Movie Aspects</h3>
+                <ul class="aspect-list" id="topAspectsList">
+                    <!-- Filled by JS -->
+                </ul>
+            </div>
+            
+        </div>
+
+        <!-- Recent Analyses -->
+        <div class="dash-panel">
+            <div class="recent-analyses-header">
+                <h3>Recent Analyses</h3>
+                <a href="/history" class="view-all-link">View All Analysis History &rarr;</a>
+            </div>
+            <div id="recentAnalysesContainer">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dash-panel mt-4" style="background: transparent; border: none; padding: 0;">
+            <h3>Quick Actions</h3>
+            <div class="quick-actions">
+                <a href="/movies" class="qa-btn">🎬 Explore Movies</a>
+                <a href="/analyze" class="qa-btn">🧠 Analyze a Review</a>
+                <a href="/history" class="qa-btn">📊 View Full History</a>
+            </div>
+        </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- Details Modal -->
+<div id="dashDetailsModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeDashDetails()">&times;</button>
+        <h2 id="modalMovieTitle" style="color: #60a5fa; margin-bottom: 10px;">Movie Title</h2>
+        <p id="modalDate" style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 15px;">Date</p>
+        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p id="modalReviewText" style="color: #e5e7eb; line-height: 1.5;"></p>
+        </div>
+        <h3 style="margin-bottom: 15px; color:#fff;">Extracted Aspects</h3>
+        <div id="modalAspects"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Set default month selector to current month
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    document.getElementById('dashMonthSelector').value = `${year}-${month}`;
+    
+    loadDashboard();
+});
+
+async function loadDashboard() {
+    document.getElementById('dashLoadingState').style.display = 'block';
+    document.getElementById('dashEmptyState').style.display = 'none';
+    document.getElementById('dashErrorState').style.display = 'none';
+    document.getElementById('dashContent').style.display = 'none';
+
+    const monthVal = document.getElementById('dashMonthSelector').value;
+    let url = '/api/dashboard';
+    if (monthVal) {
+        const [y, m] = monthVal.split('-');
+        url += `?year=${y}&month=${m}`;
+    }
+
+    try {
+        const res = await fetch(url, { credentials: 'include' });
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        const data = await res.json();
+        
+        if (data.success) {
+            if (data.stats.reviews_analyzed === 0) {
+                document.getElementById('dashEmptyState').style.display = 'block';
+            } else {
+                renderDashboard(data);
+                document.getElementById('dashContent').style.display = 'block';
+            }
+        } else {
+            throw new Error("Server returned false success");
+        }
+    } catch (err) {
+        console.error("Dashboard error:", err);
+        document.getElementById('dashErrorState').style.display = 'block';
+    } finally {
+        document.getElementById('dashLoadingState').style.display = 'none';
+    }
+}
+
+function renderDashboard(data) {
+    // 1. Summary Cards
+    document.getElementById('statMovies').textContent = data.stats.movies_analyzed;
+    document.getElementById('statReviews').textContent = data.stats.reviews_analyzed;
+    document.getElementById('statPositive').textContent = data.stats.positive;
+    document.getElementById('statNegative').textContent = data.stats.negative;
+
+    // 2. Sentiment Overview
+    const totalSentiment = data.stats.positive + data.stats.neutral + data.stats.negative;
+    let posPct = 0, neuPct = 0, negPct = 0;
+    if (totalSentiment > 0) {
+        posPct = Math.round((data.stats.positive / totalSentiment) * 100);
+        neuPct = Math.round((data.stats.neutral / totalSentiment) * 100);
+        negPct = Math.round((data.stats.negative / totalSentiment) * 100);
+    }
+    
+    document.getElementById('sentimentChartContainer').innerHTML = `
+        <div class="bar-chart-row">
+            <div class="bar-header">
+                <span><span style="color:#4ade80;">●</span> Positive</span>
+                <span>${posPct}%</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill bar-positive" style="width: ${posPct}%"></div>
+            </div>
+        </div>
+        <div class="bar-chart-row">
+            <div class="bar-header">
+                <span><span style="color:#9ca3af;">●</span> Neutral</span>
+                <span>${neuPct}%</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill bar-neutral" style="width: ${neuPct}%"></div>
+            </div>
+        </div>
+        <div class="bar-chart-row">
+            <div class="bar-header">
+                <span><span style="color:#f87171;">●</span> Negative</span>
+                <span>${negPct}%</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill bar-negative" style="width: ${negPct}%"></div>
+            </div>
+        </div>
+    `;
+
+    // 3. Monthly Activity
+    let maxActivity = 0;
+    data.monthly_activity.forEach(a => { if(a.count > maxActivity) maxActivity = a.count; });
+    if(maxActivity === 0) maxActivity = 1; // avoid divide by zero
+
+    let activityHtml = '';
+    data.monthly_activity.forEach(a => {
+        const pct = Math.round((a.count / maxActivity) * 100);
+        activityHtml += `
+            <div class="bar-chart-row">
+                <div class="bar-header">
+                    <span>${a.label}</span>
+                    <span>${a.count}</span>
+                </div>
+                <div class="bar-bg">
+                    <div class="bar-fill bar-brand" style="width: ${pct}%"></div>
+                </div>
+            </div>
+        `;
+    });
+    document.getElementById('monthlyActivityContainer').innerHTML = activityHtml;
+
+    // 4. Top Aspects
+    let aspectsHtml = '';
+    if (data.top_aspects.length > 0) {
+        data.top_aspects.forEach(a => {
+            aspectsHtml += `
+                <li class="aspect-item">
+                    <span>${a.category}</span>
+                    <span class="aspect-count">${a.count}</span>
+                </li>
+            `;
+        });
+    } else {
+        aspectsHtml = '<li class="aspect-item" style="justify-content:center; color:#9ca3af; border:none;">No aspects found</li>';
+    }
+    document.getElementById('topAspectsList').innerHTML = aspectsHtml;
+
+    // 5. Recent Analyses
+    const raContainer = document.getElementById('recentAnalysesContainer');
+    raContainer.innerHTML = '';
+    
+    if (data.recent_analyses.length === 0) {
+        raContainer.innerHTML = '<p style="color:#9ca3af;">No recent analyses to display.</p>';
+    } else {
+        data.recent_analyses.forEach(analysis => {
+            const dateStr = new Date(analysis.analyzed_at).toLocaleString();
+            
+            // Overall sentiment derivation logic for preview
+            let overall = 'Neutral';
+            let color = '#9ca3af';
+            let pos=0, neg=0;
+            if(analysis.result && analysis.result.aspects) {
+                analysis.result.aspects.forEach(a => {
+                    if(a.sentiment === 'positive') pos++;
+                    if(a.sentiment === 'negative') neg++;
+                });
+                if(pos > neg) { overall = 'Positive'; color = '#4ade80'; }
+                else if (neg > pos) { overall = 'Negative'; color = '#f87171'; }
+                else if (pos > 0 && pos === neg) { overall = 'Mixed'; color = '#FFC107'; }
+            }
+
+            const aspectsList = (analysis.result && analysis.result.aspects) ? 
+                analysis.result.aspects.map(a => a.aspect).slice(0, 3).join(', ') : '';
+            
+            const card = document.createElement('div');
+            card.className = 'recent-card';
+            card.innerHTML = `
+                <div class="rc-header">
+                    <div>
+                        <h4 class="rc-title">🎬 ${analysis.movie_title || 'Unknown Movie'}</h4>
+                        <span style="display:inline-block; margin-top:5px; font-size:0.8rem; padding:2px 8px; border-radius:12px; background:rgba(255,255,255,0.1); color:${color};">${overall}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="rc-date">${dateStr}</div>
+                        <button class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; margin-top: 10px;" onclick='openDashDetails(${JSON.stringify(analysis).replace(/'/g, "&#39;")})'>View Details</button>
+                    </div>
+                </div>
+                <div class="rc-review">"${analysis.review_text.substring(0, 100)}${analysis.review_text.length > 100 ? '...' : ''}"</div>
+                ${aspectsList ? `<div class="rc-aspects">Aspects: ${aspectsList} ${analysis.result.aspects.length > 3 ? `(+${analysis.result.aspects.length - 3})` : ''}</div>` : ''}
+            `;
+            raContainer.appendChild(card);
+        });
+    }
+}
+
+window.openDashDetails = function(analysis) {
+    document.getElementById('modalMovieTitle').textContent = `🎬 ${analysis.movie_title || 'Unknown Movie'}`;
+    document.getElementById('modalDate').textContent = `Analyzed: ${new Date(analysis.analyzed_at).toLocaleString()}`;
+    document.getElementById('modalReviewText').textContent = analysis.review_text;
+    
+    let aspectsHtml = '';
+    if(analysis.result && analysis.result.aspects && analysis.result.aspects.length > 0) {
+        analysis.result.aspects.forEach(a => {
+            const color = a.sentiment === 'positive' ? '#4ade80' : a.sentiment === 'negative' ? '#f87171' : '#9ca3af';
+            const emoji = a.sentiment === 'positive' ? '👍' : a.sentiment === 'negative' ? '👎' : '😐';
+            aspectsHtml += `
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${color};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <strong style="font-size: 1.1rem; color: #fff;">${a.aspect}</strong>
+                        <span style="font-size: 0.9rem; color: ${color}; text-transform: uppercase;">${emoji} ${a.sentiment}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #9ca3af; display: flex; justify-content: space-between;">
+                        <span>Category: ${a.category || 'N/A'}</span>
+                        <span>Confidence: ${a.confidence ? a.confidence.toFixed(2) : 'N/A'}</span>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        aspectsHtml = '<p style="color: #9ca3af;">No aspects detected.</p>';
+    }
+    document.getElementById('modalAspects').innerHTML = aspectsHtml;
+    
+    document.getElementById('dashDetailsModal').style.display = 'flex';
+};
+
+window.closeDashDetails = function() {
+    document.getElementById('dashDetailsModal').style.display = 'none';
+};
+</script>
+{% endblock %}

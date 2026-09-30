@@ -14,7 +14,6 @@ import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend for server/CLI environments
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datasets import load_dataset, DatasetDict, load_from_disk
 
 
 def get_project_root() -> str:
@@ -43,10 +42,11 @@ def clean_text(text: str) -> str:
 def load_imdb_raw(
     save_to_disk: bool = True,
     raw_dir: Optional[str] = None
-) -> DatasetDict:
+) -> Any:
     """
     Loads the official stanfordnlp/imdb dataset from Hugging Face Hub or local cache.
     """
+    from datasets import load_dataset, DatasetDict, load_from_disk
     if raw_dir is None:
         raw_dir = os.path.join(get_project_root(), "data", "raw", "imdb")
     
@@ -83,7 +83,7 @@ def load_imdb_raw(
     return dataset
 
 
-def get_dataset_summary(dataset: DatasetDict) -> Dict[str, Any]:
+def get_dataset_summary(dataset: Any) -> Dict[str, Any]:
     """Computes top-level counts, features, and split distributions."""
     summary = {}
     for split_name in dataset.keys():
@@ -112,7 +112,7 @@ def get_dataset_summary(dataset: DatasetDict) -> Dict[str, Any]:
 
 
 def get_preprocessed_dataframe(
-    dataset: DatasetDict,
+    dataset: Any,
     split: str = "train",
     sample_size: Optional[int] = None,
     seed: int = 42
@@ -163,7 +163,7 @@ def get_ngram_frequencies(
 
 
 def generate_eda_visualizations(
-    dataset: DatasetDict,
+    dataset: Any,
     output_dir: Optional[str] = None
 ) -> Dict[str, str]:
     """
@@ -335,3 +335,105 @@ def generate_eda_visualizations(
     print(f"[EDA] Saved: {fig_path_4}")
     
     return saved_figures
+
+def generate_absa_training_data(dataset: Any = None, output_path: str = None, sample_size: int = 1500):
+    """
+    Generates a structurally diverse synthetic ABSA dataset for movie/theater reviews.
+    Includes various templates, negations, intensifiers, and contrast conjunctions to
+    prevent the model from memorizing simple patterns.
+    """
+    import random
+    import pandas as pd
+    import os
+    
+    print("[Data] Generating diverse synthetic ABSA training data...")
+    
+    actors = ["the lead actor", "Leonardo DiCaprio", "Tom Hanks", "the supporting actress", "the villain", "the cast", "the protagonist", "she", "he", "they"]
+    plots = ["the plot", "the story", "the narrative", "the ending", "the script", "the writing", "the storyline"]
+    cinematography = ["the visuals", "the cinematography", "the CGI", "the special effects", "the lighting", "the camera work"]
+    
+    pos_adj = ["amazing", "brilliant", "outstanding", "fantastic", "breathtaking", "superb", "excellent", "stellar", "captivating"]
+    neg_adj = ["terrible", "boring", "awful", "uninspiring", "dull", "cliché", "slow", "horrible", "disappointing"]
+    neu_adj = ["okay", "average", "standard", "acceptable", "fine", "mediocre", "adequate"]
+    
+    intensifiers = ["absolutely", "completely", "extremely", "very", "quite", "really", "incredibly", ""]
+    negators = ["not very", "hardly", "barely", "not at all"]
+    contrasts = ["but", "however", "although", "even though", "yet", "while"]
+    
+    def get_adj(sentiment, use_negation=False):
+        if use_negation:
+            # e.g., 'not very good' -> negative
+            if sentiment == 0: return random.choice(negators) + " " + random.choice(pos_adj)
+            if sentiment == 2: return "not " + random.choice(neg_adj)
+            return "not exactly " + random.choice(pos_adj)
+        else:
+            intensifier = random.choice(intensifiers)
+            intensifier_str = intensifier + " " if intensifier else ""
+            if sentiment == 0: return intensifier_str + random.choice(neg_adj)
+            if sentiment == 1: return intensifier_str + random.choice(neu_adj)
+            if sentiment == 2: return intensifier_str + random.choice(pos_adj)
+            
+    records = []
+    
+    # Template 1: Two aspects, connected by contrast (e.g., actor vs plot)
+    for _ in range(sample_size // 2):
+        asp1 = random.choice(actors)
+        cat1 = "actor"
+        asp2 = random.choice(plots)
+        cat2 = "plot"
+        
+        # Randomly choose sentiments
+        s1 = random.choice([0, 1, 2])
+        s2 = random.choice([0, 1, 2])
+        
+        # If sentiments are the same, don't use contrast
+        if s1 == s2:
+            conn = "and"
+        else:
+            conn = random.choice(contrasts)
+            
+        use_neg1 = random.random() < 0.2
+        use_neg2 = random.random() < 0.2
+        
+        adj1 = get_adj(s1, use_neg1)
+        adj2 = get_adj(s2, use_neg2)
+        
+        templates = [
+            f"{asp1.capitalize()} was {adj1}, {conn} {asp2} was {adj2}.",
+            f"{conn.capitalize()} {asp1} was {adj1}, {asp2} felt {adj2}.",
+            f"I found {asp1} to be {adj1}; {conn}, {asp2} was {adj2}."
+        ]
+        
+        review = random.choice(templates)
+        records.append({"review": review, "aspect": asp1, "category": cat1, "sentiment": s1})
+        records.append({"review": review, "aspect": asp2, "category": cat2, "sentiment": s2})
+        
+    # Template 2: Single aspect, varying sentence structure
+    for _ in range(sample_size // 2):
+        aspect_type = random.choice([(actors, "actor"), (plots, "plot"), (cinematography, "cinematography")])
+        asp = random.choice(aspect_type[0])
+        cat = aspect_type[1]
+        
+        s = random.choice([0, 1, 2])
+        use_neg = random.random() < 0.2
+        adj = get_adj(s, use_neg)
+        
+        templates = [
+            f"I absolutely thought {asp} was {adj}.",
+            f"{asp.capitalize()} ended up being {adj}.",
+            f"To be honest, {asp} was {adj}.",
+            f"My main takeaway is that {asp} was {adj}."
+        ]
+        
+        review = random.choice(templates)
+        records.append({"review": review, "aspect": asp, "category": cat, "sentiment": s})
+        
+    df = pd.DataFrame(records)
+    df = df.drop_duplicates(subset=['review', 'aspect']).sample(frac=1, random_state=42).reset_index(drop=True)
+    
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        df.to_csv(output_path, index=False)
+        print(f"[Data] Saved high-quality ABSA training data with {len(df)} examples to {output_path}")
+        
+    return df

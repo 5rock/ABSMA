@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - MovieLens ABSA{% endblock %}
+
+{% block content %}
+<section class="section active-section" id="signup">
+  <div class="container about-container" style="max-width:500px; margin: 0 auto; padding-top:40px;">
+    <div class="page-header">
+      <h1 class="page-title">Create Account</h1>
+      <p class="page-subtitle">Join us to save your sentiment analysis history</p>
+    </div>
+    
+    <div class="about-content">
+      <div class="about-card">
+        <form id="signupForm" onsubmit="handleSignup(event)">
+          <div style="margin-bottom: 15px;">
+            <label for="name" style="display:block; margin-bottom: 5px; font-weight:600;">Name</label>
+            <input type="text" id="name" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-alt); color: var(--text-color);">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label for="email" style="display:block; margin-bottom: 5px; font-weight:600;">Email</label>
+            <input type="email" id="email" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-alt); color: var(--text-color);">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label for="password" style="display:block; margin-bottom: 5px; font-weight:600;">Password</label>
+            <input type="password" id="password" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-alt); color: var(--text-color);">
+          </div>
+          <div style="margin-bottom: 20px;">
+            <label for="confirmPassword" style="display:block; margin-bottom: 5px; font-weight:600;">Confirm Password</label>
+            <input type="password" id="confirmPassword" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-alt); color: var(--text-color);">
+            <div style="margin-top: 5px;">
+              <input type="checkbox" id="showPasswords" onclick="togglePasswordVisibility('password', 'confirmPassword')"> <label for="showPasswords" style="font-size: 0.9rem; color: var(--text-muted);">Show Passwords</label>
+            </div>
+          </div>
+          
+          <div id="signupError" style="color: var(--danger); margin-bottom: 15px; display: none;"></div>
+          
+          <button type="submit" id="signupBtn" class="btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <span id="signupBtnText">Register</span>
+            <div class="spinner" id="signupBtnSpinner" style="display: none; width: 16px; height: 16px; border-width: 2px;"></div>
+          </button>
+        </form>
+        
+        <div style="margin-top: 20px; text-align: center; color: var(--text-muted);">
+          Already have an account? <a href="/login" style="color: var(--primary);">Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

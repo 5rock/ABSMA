@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Login - MovieLens ABSA{% endblock %}
+
+{% block content %}
+<section class="section active-section" id="login">
+  <div class="container about-container" style="max-width:500px; margin: 0 auto; padding-top:40px;">
+    <div class="page-header">
+      <h1 class="page-title">Welcome Back</h1>
+      <p class="page-subtitle">Login to analyze movie reviews</p>
+    </div>
+    
+    <div class="about-content">
+      <div class="about-card">
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div style="margin-bottom: 15px;">
+            <label for="email" style="display:block; margin-bottom: 5px; font-weight:600;">Email</label>
+            <input type="email" id="email" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-alt); color: var(--text-color);">
+          </div>
+          <div style="margin-bottom: 20px;">
+            <label for="password" style="display:block; margin-bottom: 5px; font-weight:600;">Password</label>
+            <input type="password" id="password" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-alt); color: var(--text-color);">
+            <div style="margin-top: 5px;">
+              <input type="checkbox" id="showPassword" onclick="togglePasswordVisibility('password')"> <label for="showPassword" style="font-size: 0.9rem; color: var(--text-muted);">Show Password</label>
+            </div>
+          </div>
+          
+          <div id="loginError" style="color: var(--danger); margin-bottom: 15px; display: none;"></div>
+          
+          <button type="submit" id="loginBtn" class="btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <span id="loginBtnText">Login</span>
+            <div class="spinner" id="loginBtnSpinner" style="display: none; width: 16px; height: 16px; border-width: 2px;"></div>
+          </button>
+        </form>
+        
+        <div style="margin-top: 20px; text-align: center; color: var(--text-muted);">
+          Don't have an account? <a href="/signup" style="color: var(--primary);">Sign up</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

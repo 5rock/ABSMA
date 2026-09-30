@@ -24,7 +24,7 @@
       <!-- Search Input -->
       <div class="filter-group">
         <h4 class="filter-group-title">Search</h4>
-        <input type="text" id="movieSearch" class="search-input" style="width:100%; border:1px solid var(--border-color); padding:8px; border-radius:4px; background:var(--bg-dark); color:white;" placeholder="Search..." oninput="debounceSearch()">
+        <input type="text" id="movieSearch" class="search-input" style="width:100%; border:1px solid var(--border-color); padding:8px; border-radius:4px; background:var(--bg-dark); color:white;" placeholder="Search..." aria-label="Search movies" oninput="debounceSearch()">
       </div>
 
       <!-- Active Filters Chips -->
@@ -183,9 +183,10 @@ function renderMovies(movies) {
         document.getElementById('resultsCount').textContent = "0 movies found";
     } else {
         document.getElementById('emptyState').style.display = 'none';
-        document.getElementById('resultsCount').textContent = `Showing ${movies.length} movies`;
+        const displayMovies = movies.slice(0, 50);
+        document.getElementById('resultsCount').textContent = `Showing ${displayMovies.length} of ${movies.length} movies (use search to find more)`;
         
-        movies.forEach(movie => {
+        displayMovies.forEach(movie => {
             grid.appendChild(createMovieCard(movie));
         });
     }

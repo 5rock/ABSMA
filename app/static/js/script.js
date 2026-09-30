@@ -95,15 +95,32 @@ async function analyzeReview() {
   document.getElementById('noAspectsCard').style.display = 'none';
   
   try {
+    const movieTitleEl = document.getElementById('movieTitle');
+    const movieTitle = movieTitleEl ? movieTitleEl.value : '';
+    
     const res = await fetch(`/api/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ review_text: text })
+      credentials: "include",
+      body: JSON.stringify({ review_text: text, movie_title: movieTitle })
     });
+    
+    if(res.status === 401) {
+      alert("You must be logged in to analyze reviews.");
+      window.location.href = "/login";
+      return;
+    }
     
     if(!res.ok) throw new Error(`Server returned ${res.status}`);
     
-    const data = await res.json();
+    let data;
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error(`Server error: ${res.status} (Not JSON)`);
+    }
     displayResults(data);
     
   } catch (err) {
@@ -183,3 +200,145 @@ function displayResults(data) {
   document.getElementById('positiveCount').textContent = pos;
   document.getElementById('negativeCount').textContent = neg;
 }
+
+// ════════════ AUTHENTICATION ════════════
+async function checkAuthState() {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    const authLinkContainer = document.getElementById('authLinkContainer');
+    const historyLinkContainer = document.getElementById('navHistoryLinkContainer');
+    const dashboardLinkContainer = document.getElementById('navDashboardLinkContainer');
+    
+    if(!authLinkContainer) return;
+    
+    authLinkContainer.style.display = 'block';
+    
+    if (res.ok) {
+      const user = await res.json();
+      authLinkContainer.innerHTML = `<a href="#" onclick="handleLogout(event)" class="nav-link">Logout (${user.name})</a>`;
+      if (historyLinkContainer) historyLinkContainer.style.display = 'block';
+      if (dashboardLinkContainer) dashboardLinkContainer.style.display = 'block';
+    } else {
+      authLinkContainer.innerHTML = `<a href="/login" class="nav-link ${window.location.pathname === '/login' ? 'active' : ''}" id="navAuth">Login</a>`;
+      if (historyLinkContainer) historyLinkContainer.style.display = 'none';
+      if (dashboardLinkContainer) dashboardLinkContainer.style.display = 'none';
+    }
+  } catch (err) {
+    console.error("Auth state check failed", err);
+  }
+}
+
+async function handleLogout(e) {
+  e.preventDefault();
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    window.location.href = "/login";
+  } catch (err) {
+    console.error("Logout failed", err);
+  }
+}
+
+function togglePasswordVisibility(...ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.type = el.type === "password" ? "text" : "password";
+    }
+  });
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  
+  document.getElementById('loginBtnText').style.display = 'none';
+  document.getElementById('loginBtnSpinner').style.display = 'inline-block';
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('loginError').style.display = 'none';
+  
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password })
+    });
+    
+    let data;
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error(`Server error: ${res.status} (Not JSON)`);
+    }
+    
+    if (!res.ok) throw new Error(data.error || data.message || "Login failed");
+    
+    window.location.href = "/analyze";
+  } catch (err) {
+    document.getElementById('loginError').textContent = err.message;
+    document.getElementById('loginError').style.display = 'block';
+  } finally {
+    document.getElementById('loginBtnText').style.display = 'inline';
+    document.getElementById('loginBtnSpinner').style.display = 'none';
+    document.getElementById('loginBtn').disabled = false;
+  }
+}
+
+async function handleSignup(e) {
+  e.preventDefault();
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
+  
+  const errorEl = document.getElementById('signupError');
+  errorEl.style.display = 'none';
+  
+  if (password !== confirmPassword) {
+    errorEl.textContent = "Passwords do not match.";
+    errorEl.style.display = 'block';
+    return;
+  }
+  
+  document.getElementById('signupBtnText').style.display = 'none';
+  document.getElementById('signupBtnSpinner').style.display = 'inline-block';
+  document.getElementById('signupBtn').disabled = true;
+  
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name, email, password })
+    });
+    
+    let data;
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error(`Server error: ${res.status} (Not JSON)`);
+    }
+
+    if (!res.ok) throw new Error(data.error || data.message || "Registration failed");
+    
+    // Auto-login or redirect
+    window.location.href = "/login";
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.style.display = 'block';
+  } finally {
+    document.getElementById('signupBtnText').style.display = 'inline';
+    document.getElementById('signupBtnSpinner').style.display = 'none';
+    document.getElementById('signupBtn').disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuthState();
+});
+

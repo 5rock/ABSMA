@@ -1,0 +1,36 @@
+{
+    "dataset_used": "Development Data (Synthetic Aspect-Level)",
+    "number_of_training_samples": 36,
+    "number_of_test_samples": 4,
+    "class_distribution_train": {
+        "1": 16,
+        "2": 11,
+        "0": 9
+    },
+    "class_distribution_test": {
+        "1": 2,
+        "2": 1,
+        "0": 1
+    },
+    "bert_training_configuration": {
+        "model_name": "bert-base-uncased",
+        "epochs": 40,
+        "max_length": 64,
+        "batch_size": 16,
+        "device": "CPU"
+    },
+    "bert_metrics": {
+        "accuracy": 0.25,
+        "precision": 0.08333333333333333,
+        "recall": 0.3333333333333333,
+        "macro_f1": 0.13333333333333333
+    },
+    "tfidf_metrics": {
+        "accuracy": 0.75,
+        "precision": 0.5,
+        "recall": 0.6666666666666666,
+        "macro_f1": 0.5555555555555555
+    },
+    "confusion_matrices_saved": true,
+    "note": "Evaluation performed on a proper held-out aspect-level dataset."
+}

@@ -21,6 +21,7 @@
             id="heroSearch"
             class="search-input"
             placeholder="Search for movies, actors, directors, or genres..."
+            aria-label="Search for movies"
             autocomplete="off"
             onkeypress="if(event.key === 'Enter') { window.location.href='/movies?q=' + this.value }"
           />

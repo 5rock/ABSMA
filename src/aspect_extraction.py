@@ -165,7 +165,8 @@ class AspectExtractor:
                 self.ner_pipeline = pipeline(
                     "ner",
                     model="dslim/bert-base-NER",
-                    aggregation_strategy="simple"
+                    aggregation_strategy="simple",
+                    device="cpu"
                 )
                 print("[INFO] Pretrained Transformer NER initialized successfully.")
             except Exception as e:

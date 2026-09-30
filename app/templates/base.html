@@ -23,8 +23,9 @@
   <ul class="nav-links" id="navLinks">
     <li><a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}" id="navHome">Home</a></li>
     <li><a href="/movies" class="nav-link {% if request.path == '/movies' %}active{% endif %}" id="navMovies">Movies</a></li>
-    <li><a href="/analyze" class="nav-link {% if request.path == '/analyze' %}active{% endif %}" id="navAnalyze">Analyze Review</a></li>
+    <li id="navDashboardLinkContainer" style="display:none;"><a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" id="navDashboard">History</a></li>
     <li><a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}" id="navAbout">About</a></li>
+    <li id="authLinkContainer" style="display:none;"><a href="/login" class="nav-link {% if request.path == '/login' %}active{% endif %}" id="navAuth">Login</a></li>
   </ul>
   <div class="nav-actions">
     <button class="nav-search-icon" onclick="window.location.href='/movies'">🔍</button>
@@ -36,7 +37,7 @@
     {% block content %}{% endblock %}
 </main>
 
-<script src="/static/js/script.js"></script>
+<script src="/static/js/script.js?v=3"></script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

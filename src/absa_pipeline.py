@@ -35,6 +35,7 @@ if project_root not in sys.path:
 
 from src.aspect_extraction import AspectExtractor
 from src.sentiment_classifier import SentimentClassifier
+from src.transformer_model import TransformerSentimentClassifier
 from src.data_preprocessing import clean_text
 
 
@@ -57,8 +58,9 @@ class ABSAPipeline:
     def __init__(
         self,
         aspect_extractor: Optional[AspectExtractor] = None,
-        sentiment_classifier: Optional[SentimentClassifier] = None,
-        use_transformer_ner: bool = True
+        sentiment_classifier: Optional[Any] = None,
+        use_transformer_ner: bool = True,
+        use_transformer_sentiment: bool = True
     ):
         """
         Initialize the ABSA pipeline.
@@ -79,8 +81,14 @@ class ABSAPipeline:
         if sentiment_classifier is not None:
             self.sentiment_classifier = sentiment_classifier
         else:
-            print("[ABSA] Loading SentimentClassifier...")
-            self.sentiment_classifier = SentimentClassifier.load()
+            if use_transformer_sentiment:
+                print("[ABSA] Loading TransformerSentimentClassifier...")
+                self.sentiment_classifier = TransformerSentimentClassifier()
+                self.using_transformer = True
+            else:
+                print("[ABSA] Loading baseline SentimentClassifier (TF-IDF)...")
+                self.sentiment_classifier = SentimentClassifier.load()
+                self.using_transformer = False
 
         print("[ABSA] Pipeline ready.")
 
@@ -128,8 +136,12 @@ class ABSAPipeline:
         aspect_results = []
         for asp in raw_aspects:
             context = asp.get("context_sentence", cleaned)
-            # Use context sentence for aspect-level sentiment (more precise scope)
-            asp_sentiment = self.sentiment_classifier.predict(context)
+            
+            # Use transformer for aspect-level sentiment if enabled
+            if getattr(self, 'using_transformer', False):
+                asp_sentiment = self.sentiment_classifier.predict(context, aspect=asp["aspect"])
+            else:
+                asp_sentiment = self.sentiment_classifier.predict(context)
 
             aspect_results.append({
                 "aspect": asp["aspect"],

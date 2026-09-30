@@ -101,10 +101,10 @@ def main():
 
     print("\nLoading ABSA pipeline (this may take a moment)...")
     try:
-        pipeline = ABSAPipeline(use_transformer_ner=True)
+        pipeline = ABSAPipeline(use_transformer_ner=True, use_transformer_sentiment=True)
     except FileNotFoundError as e:
         print(f"\n[ERROR] {e}")
-        print("Please run: python scripts/train_sentiment.py  first.")
+        print("Please ensure your models are trained.")
         sys.exit(1)
 
     if args.batch > 0:
